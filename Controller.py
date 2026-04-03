@@ -27,7 +27,7 @@ class Controller:
 
     def worker_ia(self, camera_controller, fila_saida, ia_instance):
         while True:
-            # CORREÇÃO: Usar o método ler_frame() que você definiu no Controller
+            # CORREÇÃO: Usar o metodo ler_frame() que você definiu no Controller
             frame_raw = camera_controller.ler_frame()
 
             if frame_raw is not None:

@@ -65,10 +65,10 @@ class IA:
 
                 # 2. Lógica de Suspeito (Parado)
                 x1, y1, x2, y2 = map(int, r.boxes.xyxy[i])#recebe as coordenadas do suspeito
-                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2 #lógica do deslocamento
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2 #logica do deslocamento
 
 
-                #lógica do deslocamento aplicada no método para verificar suspeito
+                #logica do deslocamento aplicada no meotodo para verificar suspeito
                 status_suspeito = self.atualizar_status_suspeito(id_pessoa, cx, cy)
 
                 # 3. Desenhar alertas no frame

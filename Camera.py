@@ -31,7 +31,7 @@ class Camera:
 
     def lerFrame(self):
         """
-        retorno booleano e frame do método read
+        retorno booleano e frame do metodo
         """
         ret, frame = self.cam.read()
         return ret, frame

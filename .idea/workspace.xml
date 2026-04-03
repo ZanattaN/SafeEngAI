@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="3decdc4d-a6b4-4964-9898-0c5f09c58ead" name="Changes" comment="" />
+    <list default="true" id="3decdc4d-a6b4-4964-9898-0c5f09c58ead" name="Changes" comment="Primeira Versão">
+      <change beforePath="$PROJECT_DIR$/Camera.py" beforeDir="false" afterPath="$PROJECT_DIR$/Camera.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/Controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/IA.py" beforeDir="false" afterPath="$PROJECT_DIR$/IA.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,7 +26,10 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true"
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/Zhypv/Downloads/SafeEngAI"
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -39,6 +47,19 @@
       <option name="presentableId" value="Default" />
       <updated>1775246527309</updated>
     </task>
+    <task id="LOCAL-00001" summary="Primeira Versão">
+      <option name="closed" value="true" />
+      <created>1775246757821</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1775246757821</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Primeira Versão" />
+    <option name="LAST_COMMIT_MESSAGE" value="Primeira Versão" />
   </component>
 </project>
