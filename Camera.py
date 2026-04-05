@@ -14,7 +14,8 @@ class Camera:
         Câmera recebe id e define as proporções
 
         """
-        self.cam = cv2.VideoCapture(self.stream_id)
+        self.cam = cv2.VideoCapture(self.stream_id, cv2.CAP_FFMPEG)
+        self.cam.set(cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATE_ANY)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
         self.cam.set(cv2.CAP_PROP_BUFFERSIZE, 1)
