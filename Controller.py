@@ -8,7 +8,7 @@ class Controller:
         self.cam1 = cv2.VideoCapture(stream_id1, cv2.CAP_FFMPEG) if stream_id1 is not None else None
 
         # Câmera 2
-        self.cam2 = cv2.VideoCapture(stream_id2) if stream_id2 is not None else None
+        self.cam2 = cv2.VideoCapture(stream_id2, cv2.CAP_DSHOW) if stream_id2 is not None else None
 
         # Câmera 3
         #self.cam3 = cv2.VideoCapture(stream_id3, cv2.CAP_FFMPEG) if stream_id3 is not None else None
@@ -62,8 +62,8 @@ class Controller:
         return self.frame1, self.frame2 #self.frame3
 
     # compatibilidade com código antigo
-    def ler_frame(self):
-        return self.frame1
+    # def ler_frame(self):
+    #     return self.frame1
 
     def liberar(self):
         if self.cam1:
@@ -75,5 +75,5 @@ class Controller:
 
     def iniciar(self):
         from View import View
-        self.view = View()
+        self.view = View(self)
         return self.view

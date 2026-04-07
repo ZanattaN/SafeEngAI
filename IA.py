@@ -5,22 +5,16 @@ from ultralytics import YOLO
 
 
 class IA:
+    # Dentro da sua classe IA em IA.py
     def __init__(self):
-        """
-        Variável de Instância que se aplica na IA
-        Coordenadas das pessoas
-        Zonas como lugares a serem vigiados
+        from ultralytics import YOLO
+        self.model = YOLO("yolo26n.pt")
 
-        """
-        self.model = YOLO("yolov8n-pose.pt")
-        self.pessoas = {}
-        # Suas zonas coordenadas
-        self.zonas = {
-            "Cabide Parede": [0, 41, 213, 466],
-            # "Esquerdo": [61, 1, 325, 440],
-            # "Centro": [330, 92, 477, 442],
-            # "Direita": [460, 110, 700, 480]
-        }
+        # FORÇAR CARREGAMENTO: Isso evita o erro de NoneType nas threads
+        # Fazemos uma predição vazia para garantir que o modelo saia do estado 'None'
+        import numpy as np
+        dummy_frame = np.zeros((320, 320, 3), dtype=np.uint8)
+        self.model.predict(dummy_frame, imgsz=320, verbose=False)
 
     def verificar_toque_cabide(self, pontos_pessoa, frame):
         try:
@@ -46,8 +40,9 @@ class IA:
 
     def processarDeteccao(self, frame):#processa detecção do frame
         #recebe resultado do track do frame
-        resultados = self.model.track(frame, persist=True, imgsz=320, verbose=False, conf=0.4)
-
+        resultados = self.model.predict(
+            frame, imgsz=320, conf=0.4, verbose=False
+        )
         for r in resultados:
             if r.keypoints is None or r.boxes.id is None:#se não estiver nos resultados pula o loop
                 continue

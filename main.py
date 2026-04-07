@@ -1,19 +1,23 @@
 from Controller import Controller
 
 def main():
-    # 1. Instancia o Controller (passando o ID da câmera ou link RTSP)
-    # 0 é a webcam padrão, ou use a sua string RTSP
-    fonte_video1 = "rtsp://admin:Tijolonanuca007@192.168.0.8:554/cam/realmonitor?channel=1&subtype=1"
-    fonte_video2 = 0
+    # Definição das fontes
+    # Use f-strings para garantir que as variáveis entrem limpas
+    USER = "admin"
+    PASS = "@Intelbras01"
+    IP = "192.168.80.102"  # O IP do MHDX que você achou
 
+    url = f"rtsp://{USER}:{PASS}@{IP}:554/cam/realmonitor?channel=1&subtype=1"
+
+    fonte_video1 = url
+    fonte_video2 = 0 # Webcam local
+
+    # O Controller deve receber as duas
     app_controller = Controller(fonte_video1, fonte_video2)
 
-
-    # 2. Chama o metodo iniciar.
-    # Internamente, ele importa a View e a devolve para o main.
+    # Inicia a View passando as fontes através do controller ou diretamente
     app_view = app_controller.iniciar()
 
-    # 3. Inicia o loop da interface gráfica
     print("Sistema SAFEENGAI iniciado com sucesso.")
     app_view.mainloop()
 
