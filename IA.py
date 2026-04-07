@@ -1,106 +1,122 @@
 import math
-
 import cv2
+import numpy as np
 from ultralytics import YOLO
 
 
 class IA:
-    # Dentro da sua classe IA em IA.py
     def __init__(self):
-        from ultralytics import YOLO
-        self.model = YOLO("yolo26n.pt")
+        # Carrega o modelo de pose (essencial para detectar pulsos)
+        self.model = YOLO("yolov8n.pt")
 
-        # FORÇAR CARREGAMENTO: Isso evita o erro de NoneType nas threads
-        # Fazemos uma predição vazia para garantir que o modelo saia do estado 'None'
-        import numpy as np
-        dummy_frame = np.zeros((320, 320, 3), dtype=np.uint8)
-        self.model.predict(dummy_frame, imgsz=320, verbose=False)
+        # Inicializa o dicionário de rastreamento de comportamentos
+        self.pessoas = {}
+
+        # Define as zonas de interesse (ajuste as coordenadas conforme a posição da sua câmera)
+        self.zonas = {
+            "Cabide_A": (100, 100, 300, 400),
+            "Prateleira_B": (400, 100, 600, 400),
+            "CAIXA": (360, 170, 600, 530)
+        }
+
+        # Warmup
+
+        dummy = np.zeros((320, 320, 3), dtype=np.uint8)
+        self.model.track(dummy, imgsz=320, verbose=False, persist=True)
 
     def verificar_toque_cabide(self, pontos_pessoa, frame):
+        """Verifica se os pulsos da pessoa colidem com as zonas definidas."""
         try:
-            # No YOLO Pose: 9 é pulso esquerdo, 10 é pulso direito
-            maos = [pontos_pessoa[9], pontos_pessoa[10]]
-        except IndexError:
+            # No YOLO Pose: índice 9 é pulso esquerdo, 10 é pulso direito
+            # Usamos .tolist() ou garantimos que estamos acessando os valores numéricos
+            maos = []
+            if len(pontos_pessoa) > 10:
+                maos = [pontos_pessoa[9], pontos_pessoa[10]]
+            else:
+                return None
+        except (IndexError, TypeError):
             return None
 
-        for nome_zona, limites in self.zonas.items():# se as zonas com suas coordenadas estão dentro da proporção da câmera
+        for nome_zona, limites in self.zonas.items():
             x_min, y_min, x_max, y_max = limites
 
-            # Desenha a zona na tela para conferência
-            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (255, 255, 0), 1)#desenha o retângulo na pessoa
-            cv2.putText(frame, nome_zona, (x_min, y_min - 5),#insere o texto acima do retangulo
+            # Desenha a zona visualmente para conferência no monitor
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (255, 255, 0), 1)
+            cv2.putText(frame, nome_zona, (x_min, y_min - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
 
-            for mao in maos:# se detectar pulso
+            for mao in maos:
                 x_mao, y_mao = mao[0], mao[1]
-                # Verifica colisão
+                # Verifica se a coordenada da mão está dentro do retângulo da zona
                 if x_min < x_mao < x_max and y_min < y_mao < y_max:
-                    return nome_zona  # RETORNA o nome da zona para o alerta
+                    return nome_zona
         return None
 
-    def processarDeteccao(self, frame):#processa detecção do frame
-        #recebe resultado do track do frame
-        resultados = self.model.predict(
-            frame, imgsz=320, conf=0.4, verbose=False
-        )
+    def processarDeteccao(self, frame):
+        resultados = self.model.track(frame, imgsz=640, conf=0.2, verbose=False, persist=True)
+
         for r in resultados:
-            if r.keypoints is None or r.boxes.id is None:#se não estiver nos resultados pula o loop
+            # Se não houver caixas ou IDs, pula
+            if r.boxes is None or r.boxes.id is None:
                 continue
 
-            """
-            r.keypoints.xy contém as coordenadas das articulações ela receberá
-            o id que está em cada caixa do track e mandará para o id_pessoa
-            
-            """
-            for i, pontos in enumerate(r.keypoints.xy):
-                id_pessoa = int(r.boxes.id[i])
+            # Pegamos os dados como arrays numpy para facilitar o acesso
+            ids = r.boxes.id.cpu().numpy().astype(int)
+            boxes = r.boxes.xyxy.cpu().numpy()
 
-                # 1. Verifica interação com cabide usando a pose
-                zona_tocada = self.verificar_toque_cabide(pontos, frame)
+            # Keypoints de pose (se houver)
+            keypoints = r.keypoints.xy.cpu().numpy() if r.keypoints is not None else None
 
-                # 2. Lógica de Suspeito (Parado)
-                x1, y1, x2, y2 = map(int, r.boxes.xyxy[i])#recebe as coordenadas do suspeito
-                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2 #logica do deslocamento
+            for i in range(len(ids)):
+                id_pessoa = ids[i]
+                x1, y1, x2, y2 = map(int, boxes[i])
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
 
+                # 1. Lógica do Caixa (Ignorar alerta de parado aqui)
+                x_min, y_min, x_max, y_max = self.zonas.get("CAIXA", (0, 0, 0, 0))
+                no_caixa = x_min < cx < x_max and y_min < cy < y_max
 
-                #logica do deslocamento aplicada no meotodo para verificar suspeito
-                status_suspeito = self.atualizar_status_suspeito(id_pessoa, cx, cy)
+                # 2. Verificação de Toque (Pose)
+                zona_tocada = None
+                if keypoints is not None and i < len(keypoints):
+                    zona_tocada = self.verificar_toque_cabide(keypoints[i], frame)
 
-                # 3. Desenhar alertas no frame
-                cor = (0, 255, 0)  # Verde padrão
+                # 3. Status Suspeito (Só se NÃO estiver no caixa)
+                status_suspeito = False
+                if not no_caixa:
+                    status_suspeito = self.atualizar_status_suspeito(id_pessoa, cx, cy)
 
-                if zona_tocada:
-                    cor = (0, 0, 255)  # Vermelho
-                    cv2.putText(frame, f"ALERTA: MEXENDO NO {zona_tocada.upper()}",
-                                (x1, y1 - 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, cor, 2)
-
-                if status_suspeito:
+                # --- Desenho dos Alertas ---
+                cor = (0, 255, 0)
+                if no_caixa:
+                    cv2.putText(frame, "ATENDIMENTO", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                elif status_suspeito or zona_tocada:
                     cor = (0, 0, 255)
-                    cv2.putText(frame, "SUSPEITO PARADO", (x1, y1 - 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, cor, 2)
+                    msg = "SUSPEITO" if status_suspeito else f"TOQUE: {zona_tocada}"
+                    cv2.putText(frame, msg, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
 
-                # Desenha a caixa e ID
-                label = f'ID {id_pessoa}'
                 cv2.rectangle(frame, (x1, y1), (x2, y2), cor, 2)
-                cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor, 2)
+                cv2.putText(frame, f"ID {id_pessoa}", (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, cor, 1)
 
         return frame
 
     def atualizar_status_suspeito(self, id_pessoa, cx, cy):
-        """Monitora se a pessoa está parada há muito tempo."""
-        #Se a pessoa não estiver no array, então ela é adicionada
+        """Calcula se a pessoa se moveu menos que 5 pixels em 60 frames (~2 segundos)."""
         if id_pessoa not in self.pessoas:
             self.pessoas[id_pessoa] = {"x": cx, "y": cy, "parado": 0}
             return False
 
-        #distância euclidiana
-        dist = math.sqrt((cx - self.pessoas[id_pessoa]["x"]) ** 2 + (cy - self.pessoas[id_pessoa]["y"]) ** 2)
+        # Cálculo da distância entre a posição anterior e a atual
+        dist = math.sqrt((cx - self.pessoas[id_pessoa]["x"]) ** 2 +
+                         (cy - self.pessoas[id_pessoa]["y"]) ** 2)
 
-        #se a distância for menor que 5 vai somando até o suspeito
+        # Se a distância for insignificante, incrementa o contador de "parado"
         if dist < 5:
             self.pessoas[id_pessoa]["parado"] += 1
         else:
+            # Se a pessoa se moveu, reseta o cronômetro e atualiza a posição
             self.pessoas[id_pessoa]["parado"] = 0
             self.pessoas[id_pessoa]["x"], self.pessoas[id_pessoa]["y"] = cx, cy
 
-        return self.pessoas[id_pessoa]["parado"] > 60  # Retorna True se parado > 2 segundos aprox.
+        # 60 frames a 30 FPS equivalem a 2 segundos parado
+        return self.pessoas[id_pessoa]["parado"] > 60

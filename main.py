@@ -4,7 +4,7 @@ def main():
     # Definição das fontes
     # Use f-strings para garantir que as variáveis entrem limpas
     USER = "admin"
-    PASS = "senha"
+    PASS = "@Intelbras01"
     IP = "192.168.80.102"  # O IP do MHDX que você achou
 
     url = f"rtsp://{USER}:{PASS}@{IP}:554/cam/realmonitor?channel=1&subtype=1"
